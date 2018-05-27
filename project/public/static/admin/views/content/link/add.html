@@ -1,0 +1,88 @@
+<form class="layui-form layui-form-pane">
+    <div class="layui-form-item">
+        <label class="layui-form-label">友情链接名</label>
+        <div class="layui-input-block">
+            <input type="text" name="name" lay-verify="required" lay-verType="tips" autocomplete="false"
+                   class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">链接地址</label>
+        <div class="layui-input-block">
+            <input type="text" name="url" lay-verify="required|url" lay-verType="tips" autocomplete="false"
+                   class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">logo</label>
+        <div class="layui-input-inline">
+            <input type="hidden" name="image" id="LAY_imageSrc"
+                   placeholder="图片地址"
+                   class="layui-input">
+            <input type="hidden" name="image_id" id="LAY_imageId">
+        </div>
+        <div class="layui-input-inline layui-btn-container" style="width: auto;">
+            <button type="button" class="layui-btn layui-btn-primary" id="LAY_imageUpload">
+                <i class="layui-icon">&#xe67c;</i>上传图片
+            </button>
+            <button type="button" class="layui-btn layui-btn-primary"
+                    layadmin-event="imagePreview">查看图片
+            </button>
+        </div>
+    </div>
+    <button class="layui-btn" lay-submit lay-filter="add">提交</button>
+</form>
+
+<script>
+    layui.use(['admin', 'form', 'layer', 'upload'], function () {
+        var $ = layui.$
+            , admin = layui.admin
+            , form = layui.form
+            , layer = layui.layer
+            , upload = layui.upload;
+
+        upload.render({
+            elem: '#LAY_imageUpload'
+            , url: '/api/common/uploadImage'
+            , done: function (res) {
+                if (res.code == 0) {
+                    layer.msg(res.msg, {icon: 6, time: 1000, shade: 0.1}, function () {
+                        $("#LAY_imageSrc").val(res.data.src);
+                        $("#LAY_imageId").val(res.data.id);
+                    });
+                }
+            }
+        });
+
+        //查看图片
+        admin.events.imagePreview = function (othis) {
+            var src = $("#LAY_imageSrc").val();
+            layer.photos({
+                photos: {
+                    "title": "查看图片"
+                    , "data": [{
+                        "src": src
+                    }]
+                }
+                , shade: 0.01
+                , closeBtn: 1
+                , anim: 5
+            });
+        };
+
+        form.on('submit(add)', function (data) {
+            admin.req({
+                url: '/admin/link/add'
+                , type: 'post'
+                , data: data.field
+                , done: function (res) {
+                    layer.msg(res.msg, {icon: 6, time: 1000, shade: 0.1}, function () {
+                        layer.closeAll();
+                    });
+                }
+            });
+            return false;
+        });
+
+    });
+</script>

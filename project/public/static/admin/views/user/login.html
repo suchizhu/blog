@@ -1,0 +1,104 @@
+<script type="text/html" template>
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/login.css?v={{ layui.admin.v }}-1" media="all">
+</script>
+
+<div class="layui-login">
+    <script type="text/html" template>
+        <div class="layui-login-logo"><img src="{{ layui.setter.base }}style/res/login-logo.jpg" alt="logo"></div>
+    </script>
+    <div class="layui-login-title">苏赤竹博客后台管理系统</div>
+    <div class="layui-login-main">
+        <form class="layui-form">
+            <div class="layui-form-item">
+                <label class="layui-form-label layui-icon layui-icon-username"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="username" lay-verify="required" lay-verType="tips" placeholder="用户名"
+                           class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label"><i class="layui-icon layui-icon-password"></i></label>
+                <div class="layui-input-block">
+                    <input type="password" name="password" lay-verify="required" lay-verType="tips" placeholder="密码"
+                           class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item layui-row">
+                <label class="layui-form-label"><i class="layui-icon layui-icon-vercode"></i></label>
+                <div class="layui-input-block">
+                    <div class="layui-col-md6 layui-col-xs6">
+                        <input type="text" name="captcha" lay-verify="required" lay-verType="tips" placeholder="验证码"
+                               class="layui-input">
+                    </div>
+                    <div class="layui-col-md6 layui-col-xs6">
+                        <img src="/admin/index/captcha" class="layui-admin-vercode" alt="captcha">
+                    </div>
+                </div>
+            </div>
+            <button class="layui-btn layui-btn-primary layui-btn-fluid" lay-submit lay-filter="login">登录</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    layui.use(['admin', 'form'], function () {
+        var $ = layui.$
+            , setter = layui.setter
+            , admin = layui.admin
+            , form = layui.form
+            , router = layui.router()
+            , search = router.search;
+
+        //强制拦截已登入
+        if(setter.interceptor){
+            var local = layui.data(setter.tableName);
+            if(local[setter.request.tokenName]){
+                return location.hash = '/';
+            }
+        }
+
+        form.render();
+
+        //提交
+        form.on('submit(login)', function (obj) {
+
+            //请求登入接口
+            admin.req({
+                url: '/admin/user/login'
+                , type: 'post'
+                , data: obj.field
+                , success: function (res) {
+                    if (res.code == 1) {
+                        $(".layui-admin-vercode").attr('src', '/admin/index/captcha');
+                    }
+                }
+                , done: function (res) {
+
+                    //请求成功后，写入 access_token
+                    layui.data(setter.tableName, {
+                        key: setter.request.tokenName
+                        , value: res.data.access_token
+                    });
+
+                    //登入成功的提示与跳转
+                    layer.msg(res.msg, {
+                        offset: '15px'
+                        , icon: 1
+                        , time: 1000
+                        , shade: 0.1
+                    }, function () {
+                        location.hash = search.redirect ? decodeURIComponent(search.redirect) : '/';
+                    });
+                }
+            });
+
+            return false;
+
+        });
+
+        // 点击更换验证码
+        $(".layui-admin-vercode").on('click', function () {
+            $(this).attr('src', '/admin/index/captcha');
+        });
+    });
+</script>

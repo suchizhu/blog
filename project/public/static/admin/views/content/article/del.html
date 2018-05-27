@@ -1,0 +1,145 @@
+<title>文章类型删除列表</title>
+
+<div class="layui-card layadmin-header">
+    <div class="layui-breadcrumb" lay-filter="breadcrumb">
+        <a lay-href="">主页</a>
+        <a><cite>内容管理</cite></a>
+        <a><cite>文章类型管理</cite></a>
+        <a><cite></cite></a>
+    </div>
+</div>
+
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">文章类型删除列表</div>
+                <div class="layui-card-body">
+                    <div class="LAY-content-article-btns" style="margin-bottom: 10px;">
+                        <button class="layui-btn layui-btn-danger layui-btn-xs" data-events="clear" title="批量清除">
+                            <i class="layui-icon layui-icon-bianjiwenzi"></i>
+                        </button>
+                    </div>
+                    <table id="LAY-content-article-table-del"
+                           lay-filter="LAY-content-article-table-del"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/html" id="statusTpl">
+    <input type="checkbox" name="status" value="{{ d.id }}" lay-skin="switch" lay-text="正常|禁用" lay-filter="status" {{ d.status == 0 ? 'checked' : '' }}>
+</script>
+<script type="text/html" id="toolbarTpl">
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="clear" title="清除">
+        <i class="layui-icon layui-icon-bianjiwenzi"></i>
+    </a>
+</script>
+
+<script>
+    layui.use(['admin', 'table', 'form'], function () {
+        var $ = layui.$
+            , admin = layui.admin
+            , element = layui.element
+            , table = layui.table
+            , form = layui.form;
+
+        var imageTpl = function(d){
+            return '<button class="layui-btn layui-btn-primary layui-btn-xs" lay-imageSrc="'+ d.image +'" layadmin-event="imagePreview">查看图片</button>';
+        };
+
+        //列表渲染
+        table.render({
+            elem: '#LAY-content-article-table-del'
+            ,url: '/admin/article/getList'
+            ,page: true
+            ,limit: 10
+            ,limits: [10, 50, 100, 200, 500]
+            ,cellMinWidth: 100
+            , cols: [[
+                {type: 'checkbox', fixed: 'left'}
+                , {type: 'numbers'}
+                , {field: 'title', title: '文章标题', align: 'center'}
+                , {field: 'type', title: '文章类型', align: 'center'}
+                , {field: 'introduct', title: '文章导读', align: 'center'}
+                , {field: 'read', title: '阅读量', align: 'center'}
+                , {field: 'comment', title: '评论数', align: 'center'}
+                , {field: 'image', title: '文章封面图片', align: 'center', templet: imageTpl}
+                , {field: 'create_time', title: '创建时间', align: 'center'}
+                , {field: 'update_time', title: '修改时间', align: 'center'}
+                , {field: 'status', title: '状态', align: 'center', templet: '#statusTpl'}
+                , {fixed: 'right', title: '操作', align: 'center', toolbar: '#toolbarTpl'}
+            ]]
+            ,where: {
+                statusCode: '=',
+                access_token: layui.data('layuiAdmin').access_token
+            }
+        });
+
+        //监听状态操作
+        form.on('switch(status)',function(obj){
+            var value = obj.elem.checked ? 0: 1;
+            admin.req({
+                url: '/admin/article/update'
+                ,type: 'post'
+                ,data: {field: this.name, value: value, id: this.value}
+                ,done: function(res){
+                    layer.msg(res.msg,{icon: 6,time: 1000,shade: 0.1});
+                }
+            });
+        });
+
+        //监听工具栏操作
+        table.on('tool(LAY-content-article-table-del)',function(obj){
+            if(obj.event === 'clear'){
+                layer.confirm('确认清除?',{icon: 2, btnAlign: 'c'},function(index){
+                    admin.req({
+                        url: '/admin/article/clear'
+                        ,type: 'post'
+                        ,data: {id: obj.data.id}
+                        ,done: function(res){
+                            layer.msg(res.msg,{icon: 6,time: 1000,shade: 0.1},function(){
+                                obj.del();
+                            });
+                        }
+                    });
+                    layer.close(index);
+                });
+            }
+        });
+
+        //事件处理
+        var events = {
+            clear: function(othis){
+                var checkStatus = table.checkStatus('LAY-content-article-table-del')
+                    ,data = [];
+                if(checkStatus.data.length === 0){
+                    return layer.msg('未选中行');
+                }
+                for(var i = 0;i < checkStatus.data.length;i++){
+                    data[i] = checkStatus.data[i]['id'];
+                }
+                layer.confirm('确认清除选中的数据吗?',{icon: 2, btnAlign: 'c'},function(index){
+                    admin.req({
+                        url: '/admin/article/clear'
+                        ,type: 'post'
+                        ,data: {id: data}
+                        ,done: function(res){
+                            layer.msg(res.msg,{icon: 6,time: 1000,shade: 0.1},function(){
+                                admin.events.refresh();
+                            });
+                        }
+                    });
+                    layer.close(index);
+                });
+            }
+        }
+
+        //触发事件
+        $(".LAY-content-article-btns .layui-btn").on('click',function(){
+            var othis = $(this),thisEvent = othis.data('events');
+            events[thisEvent] && events[thisEvent].call(this, othis);
+        });
+    });
+</script>

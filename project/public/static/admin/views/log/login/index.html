@@ -1,0 +1,118 @@
+<title>登录日志</title>
+
+<div class="layui-card layadmin-header">
+    <div class="layui-breadcrumb" lay-filter="breadcrumb">
+        <a lay-href="">主页</a>
+        <a><cite>日志</cite></a>
+        <a><cite></cite></a>
+    </div>
+</div>
+
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">登录日志</div>
+                <div class="layui-card-body">
+                    <div class="LAY-log-login-btns" style="margin-bottom: 10px;">
+                        <button class="layui-btn layui-btn-danger layui-btn-xs" data-events="del" title="删除">
+                            <i class="layui-icon layui-icon-delete"></i>
+                        </button>
+                    </div>
+                    <table id="LAY-log-login-table-list"
+                           lay-filter="LAY-log-login-table-list"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/html" id="toolbarTpl">
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del" title="删除">
+        <i class="layui-icon layui-icon-delete"></i>
+    </a>
+</script>
+
+<script>
+    layui.use(['admin', 'table', 'form'], function () {
+        var $ = layui.$
+            , admin = layui.admin
+            , element = layui.element
+            , table = layui.table
+            , form = layui.form;
+
+        //列表渲染
+        table.render({
+            elem: '#LAY-log-login-table-list'
+            , url: '/admin/log/getList'
+            , page: true
+            , limit: 10
+            , limits: [10, 50, 100, 200, 500]
+            , cellMinWidth: 100
+            , cols: [[
+                {type: 'checkbox', fixed: 'left'}
+                , {type: 'numbers'}
+                , {field: 'username', title: '用户', align: 'center'}
+                , {field: 'ip', title: 'ip地址', align: 'center'}
+                , {field: 'create_time', title: '登录时间', align: 'center'}
+                , {fixed: 'right', title: '操作', align: 'center', toolbar: '#toolbarTpl'}
+            ]]
+            , where: {
+                statusCode: '<',
+                access_token: layui.data('layuiAdmin').access_token
+            }
+        });
+
+        //监听工具栏操作
+        table.on('tool(LAY-log-login-table-list)', function (obj) {
+            if (obj.event === 'del') {
+                layer.confirm('确认清除?', {icon: 2, btnAlign: 'c'}, function (index) {
+                    admin.req({
+                        url: '/admin/log/clear'
+                        , type: 'post'
+                        , data: {id: obj.data.id}
+                        , done: function (res) {
+                            layer.msg(res.msg, {icon: 6, time: 1000, shade: 0.1}, function () {
+                                obj.del();
+                            });
+                        }
+                    });
+                    layer.close(index);
+                });
+            }
+        });
+
+        //事件处理
+        var events = {
+            del: function (othis) {
+                var checkStatus = table.checkStatus('LAY-log-login-table-list')
+                    , data = [];
+                if (checkStatus.data.length === 0) {
+                    return layer.msg('未选中行');
+                }
+                for (var i = 0; i < checkStatus.data.length; i++) {
+                    data[i] = checkStatus.data[i]['id'];
+                }
+                layer.confirm('确认清除选中的数据吗?', {icon: 2, btnAlign: 'c'}, function (index) {
+                    admin.req({
+                        url: '/admin/log/clear'
+                        , type: 'post'
+                        , data: {id: data}
+                        , done: function (res) {
+                            layer.msg(res.msg, {icon: 6, time: 1000, shade: 0.1}, function () {
+                                admin.events.refresh();
+                            });
+                        }
+                    });
+                    layer.close(index);
+                });
+            }
+        }
+
+        //触发事件
+        $(".LAY-log-login-btns .layui-btn").on('click', function () {
+            var othis = $(this), thisEvent = othis.data('events');
+            events[thisEvent] && events[thisEvent].call(this, othis);
+        });
+    });
+</script>

@@ -1,0 +1,200 @@
+<title>角色列表</title>
+
+<div class="layui-card layadmin-header">
+    <div class="layui-breadcrumb" lay-filter="breadcrumb">
+        <a lay-href="">主页</a>
+        <a><cite>用户</cite></a>
+        <a><cite>角色管理</cite></a>
+        <a><cite></cite></a>
+    </div>
+</div>
+
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">角色列表</div>
+                <div class="layui-card-body">
+                    <div class="LAY-content-role-btns" style="margin-bottom: 10px;">
+                        <button class="layui-btn layui-btn-primary layui-btn-xs" data-events="add" title="添加">
+                            <i class="layui-icon layui-icon-tianjia"></i>
+                        </button>
+                        <button class="layui-btn layui-btn-danger layui-btn-xs" data-events="del" title="删除">
+                            <i class="layui-icon layui-icon-delete"></i>
+                        </button>
+                    </div>
+                    <table id="LAY-content-role-table-list"
+                           lay-filter="LAY-content-role-table-list"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/html" id="statusTpl">
+    <input type="checkbox" name="status" value="{{ d.id }}" lay-skin="switch" lay-text="正常|禁用" lay-filter="status" {{
+           d.status== 0 ? 'checked' : '' }}>
+</script>
+<script type="text/html" id="toolbarTpl">
+    <a class="layui-btn layui-btn-cyan layui-btn-xs" lay-event="access" title="设置权限">
+        <i class="layui-icon layui-icon-set"></i>
+    </a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del" title="删除">
+        <i class="layui-icon layui-icon-delete"></i>
+    </a>
+</script>
+
+<script>
+    layui.use(['admin', 'table', 'form'], function () {
+        var $ = layui.$
+            , admin = layui.admin
+            , element = layui.element
+            , table = layui.table
+            , form = layui.form;
+
+        //弹出层默认宽度
+        var width = '520px';
+
+        //当屏幕宽度低于768,弹出层的宽度
+        if (admin.screen() == 0) {
+            width = '100%';
+        }
+
+        //列表渲染
+        table.render({
+            elem: '#LAY-content-role-table-list'
+            , url: '/admin/role/getList'
+            , page: true
+            , limit: 10
+            , limits: [10, 50, 100, 200, 500]
+            , cellMinWidth: 100
+            , cols: [[
+                {type: 'checkbox', fixed: 'left'}
+                , {type: 'numbers'}
+                , {field: 'name', title: '角色名', align: 'center', edit: 'text'}
+                , {field: 'create_time', title: '创建时间', align: 'center'}
+                , {field: 'status', title: '状态', align: 'center', templet: '#statusTpl'}
+                , {fixed: 'right', title: '操作', align: 'center', toolbar: '#toolbarTpl'}
+            ]]
+            , where: {
+                statusCode: '<',
+                access_token: layui.data('layuiAdmin').access_token
+            }
+        });
+
+        //监听单元格编辑
+        table.on('edit(LAY-content-role-table-list)', function (obj) {
+            admin.req({
+                url: '/admin/role/update'
+                , type: 'post'
+                , data: {field: obj.field, value: obj.value, id: obj.data.id}
+                , done: function (res) {
+                    layer.msg(res.msg, {icon: 6, time: 1000, shade: 0.1});
+                }
+            });
+        });
+
+        //监听状态操作
+        form.on('switch(status)', function (obj) {
+            var value = obj.elem.checked ? 0 : 1;
+            admin.req({
+                url: '/admin/role/update'
+                , type: 'post'
+                , data: {field: this.name, value: value, id: this.value}
+                , done: function (res) {
+                    layer.msg(res.msg, {icon: 6, time: 1000, shade: 0.1});
+                }
+            });
+        });
+
+        //监听工具栏操作
+        table.on('tool(LAY-content-role-table-list)', function (obj) {
+            if (obj.event === 'del') {
+                layer.confirm('确认删除?', {icon: 2, btnAlign: 'c'}, function (index) {
+                    admin.req({
+                        url: '/admin/role/update'
+                        , type: 'post'
+                        , data: {field: 'status', value: 2, id: obj.data.id}
+                        , done: function (res) {
+                            layer.msg(res.msg, {icon: 6, time: 1000, shade: 0.1}, function () {
+                                obj.del();
+                            });
+                        }
+                    });
+                    layer.close(index);
+                });
+            } else if (obj.event === 'access') {
+                admin.popup({
+                    id: 'access'
+                    , title: '设置权限'
+                    , area: ['320px','100%']
+                    , success: function () {
+                        layui.view(this.id).render('user/role/access',{id: obj.data.id});
+                    }
+                });
+            }
+        });
+
+        //查看图片
+        admin.events.imagePreview = function (othis) {
+            var src = $(othis).attr('lay-imageSrc');
+            layer.photos({
+                photos: {
+                    "title": "查看图片"
+                    , "data": [{
+                        "src": src
+                    }]
+                }
+                , shade: 0.01
+                , closeBtn: 1
+                , anim: 5
+            });
+        };
+
+        //事件处理
+        var events = {
+            add: function (othis) {
+                admin.popup({
+                    id: 'addRole'
+                    , title: '添加'
+                    , area: ['320px', '350px']
+                    , success: function () {
+                        layui.view(this.id).render('user/role/add');
+                    }
+                    , end: function () {
+                        admin.events.refresh();
+                    }
+                });
+            },
+            del: function (othis) {
+                var checkStatus = table.checkStatus('LAY-content-role-table-list')
+                    , data = [];
+                if (checkStatus.data.length === 0) {
+                    return layer.msg('未选中行');
+                }
+                for (var i = 0; i < checkStatus.data.length; i++) {
+                    data[i] = checkStatus.data[i]['id'];
+                }
+                layer.confirm('确认删除选中的数据吗?', {icon: 2, btnAlign: 'c'}, function (index) {
+                    admin.req({
+                        url: '/admin/role/del'
+                        , type: 'post'
+                        , data: {id: data}
+                        , done: function (res) {
+                            layer.msg(res.msg, {icon: 6, time: 1000, shade: 0.1}, function () {
+                                admin.events.refresh();
+                            });
+                        }
+                    });
+                    layer.close(index);
+                });
+            }
+        }
+
+        //触发事件
+        $(".LAY-content-role-btns .layui-btn").on('click', function () {
+            var othis = $(this), thisEvent = othis.data('events');
+            events[thisEvent] && events[thisEvent].call(this, othis);
+        });
+    });
+</script>

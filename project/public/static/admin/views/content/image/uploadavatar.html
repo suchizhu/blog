@@ -1,0 +1,80 @@
+<title>默认头像上传</title>
+
+<div class="layui-card layadmin-header">
+    <div class="layui-breadcrumb" lay-filter="breadcrumb">
+        <a lay-href="">主页</a>
+        <a><cite>图片管理</cite></a>
+        <a><cite></cite></a>
+    </div>
+</div>
+
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">默认头像上传</div>
+                <div class="layui-card-body">
+                    <form class="layui-form">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">头像</label>
+                            <div class="layui-input-inline">
+                                <input type="hidden" name="avatar" id="LAY_avatarSrc"
+                                       placeholder="图片地址"
+                                       class="layui-input">
+                            </div>
+                            <div class="layui-input-inline layui-btn-container" style="width: auto;">
+                                <button type="button" class="layui-btn layui-btn-primary" id="LAY_avatarUpload">
+                                    <i class="layui-icon">&#xe67c;</i>上传头像
+                                </button>
+                                <button type="button" class="layui-btn layui-btn-primary"
+                                        layadmin-event="avartatPreview">查看头像
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    layui.use(['admin', 'upload'], function () {
+        var $ = layui.$
+            , admin = layui.admin
+            , element = layui.element
+            , upload = layui.upload;
+
+        // 上传头像
+        upload.render({
+            elem: '#LAY_avatarUpload'
+            , url: '/api/common/uploadAvatar'
+            , data: {image_id: 0, path: ''}
+            , field: 'image'
+            , size: 50
+            , done: function (res) {
+                if (res.code == 0) {
+                    layer.msg(res.msg, {icon: 6, time: 1000, shade: 0.1}, function () {
+                        $("#LAY_avatarSrc").val(res.data);
+                    });
+                }
+            }
+        });
+
+        //查看头像
+        admin.events.avartatPreview = function (othis) {
+            var src = $("#LAY_avatarSrc").val();
+            layer.photos({
+                photos: {
+                    "title": "查看头像"
+                    , "data": [{
+                        "src": src
+                    }]
+                }
+                , shade: 0.01
+                , closeBtn: 1
+                , anim: 5
+            });
+        };
+    });
+</script>

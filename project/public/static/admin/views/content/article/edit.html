@@ -1,0 +1,141 @@
+<form class="layui-form layui-form-pane">
+    <script type="text/html" template lay-url="/admin/article/getArticle?id={{ d.params.id }}"
+            lay-done="layui.data.done(d);">
+        <div class="layui-form-item">
+            <label class="layui-form-label">文章标题</label>
+            <div class="layui-input-block">
+                <input type="text" name="title" value="{{ d.data.article.title }}" lay-verify="required" lay-verType="tips" autocomplete="false"
+                       class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">文章类型</label>
+            <div class="layui-input-block">
+                <select name="type_id" lay-verify="required" lay-verType="tips">
+                    <option value=""></option>
+                    {{# layui.each(d.data.articleTypeList,function(index,item){ }}
+                    <option value="{{ item.id }}" {{# if(d.data.article.type_id == item.id){ }}selected{{# } }}>{{ item.name }}</option>
+                    {{# }) }}
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">文章导读</label>
+            <div class="layui-input-block">
+                <textarea name="introduct" class="layui-textarea" lay-verify="required" lay-verType="tips">{{ d.data.article.introduct }}</textarea>
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">文章内容</label>
+            <div class="layui-input-block">
+                <textarea id="LAY-edit-editor">{{ d.data.article.content }}</textarea>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">文章图片</label>
+            <div class="layui-input-inline">
+                <input type="hidden" name="image" value="{{ d.data.article.image }}" id="LAY_imageSrc"
+                       placeholder="图片地址"
+                       class="layui-input">
+                <input type="hidden" name="image_id" id="LAY_imageId" value="{{ d.data.article.image_id }}">
+            </div>
+            <div class="layui-input-inline layui-btn-container" style="width: auto;">
+                <button type="button" class="layui-btn layui-btn-primary" id="LAY_imageUpload">
+                    <i class="layui-icon">&#xe67c;</i>上传图片
+                </button>
+                <button type="button" class="layui-btn layui-btn-primary"
+                        layadmin-event="imagePreview">查看图片
+                </button>
+            </div>
+        </div>
+        <input type="hidden" name="id" value="{{ d.params.id }}">
+    </script>
+    <button class="layui-btn" lay-submit lay-filter="edit">提交</button>
+</form>
+
+<script>
+    layui.data.done = function (d) {
+        layui.use(['admin', 'form', 'layer', 'layedit', 'upload'], function () {
+            var $ = layui.$
+                , admin = layui.admin
+                , form = layui.form
+                , layer = layui.layer
+                , layedit = layui.layedit
+                , upload = layui.upload;
+
+            form.render();
+
+            var index = layedit.build('LAY-edit-editor', {
+                tool: [
+                    'strong' //加粗
+                    , 'italic' //斜体
+                    , 'underline' //下划线
+                    , 'del' //删除线
+
+                    , '|' //分割线
+
+                    , 'left' //左对齐
+                    , 'center' //居中对齐
+                    , 'right' //右对齐
+
+                    , '|' //分割线
+
+                    , 'link' //超链接
+                    , 'face' //表情
+                    , 'image' //插入图片
+                ],
+                height: '500px',
+                uploadImage: {
+                    url: '/api/common/uploadImage',
+                    type: 'post'
+                }
+            });
+
+            upload.render({
+                elem: '#LAY_imageUpload'
+                , url: '/api/common/uploadImage'
+                , data: {path: $("#LAY_imageSrc").val()}
+                , done: function (res) {
+                    if (res.code == 0) {
+                        layer.msg(res.msg, {icon: 6, time: 1000, shade: 0.1}, function () {
+                            $("#LAY_imageSrc").val(res.data.src);
+                            $("#LAY_imageId").val(res.data.id);
+                        });
+                    }
+                }
+            });
+
+            //查看图片
+            admin.events.imagePreview = function (othis) {
+                var src = $("#LAY_imageSrc").val();
+                layer.photos({
+                    photos: {
+                        "title": "查看图片"
+                        , "data": [{
+                            "src": src
+                        }]
+                    }
+                    , shade: 0.01
+                    , closeBtn: 1
+                    , anim: 5
+                });
+            };
+
+            form.on('submit(edit)', function (data) {
+                data.field.content = layedit.getContent(index);
+                admin.req({
+                    url: '/admin/article/edit'
+                    , type: 'post'
+                    , data: data.field
+                    , done: function (res) {
+                        layer.msg(res.msg, {icon: 6, time: 1000, shade: 0.1}, function () {
+                            layer.closeAll();
+                        });
+                    }
+                });
+                return false;
+            });
+
+        });
+    };
+</script>

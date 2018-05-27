@@ -1,0 +1,69 @@
+<form class="layui-form layui-form-pane">
+    <div class="layui-form-item">
+        <label class="layui-form-label">用户名</label>
+        <div class="layui-input-block">
+            <input type="text" name="username" lay-verify="required" lay-verType="tips" autocomplete="false"
+                   class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">角色</label>
+        <div class="layui-input-block">
+            <script type="text/html" template lay-url="/admin/user/getRoleList" lay-done="layui.data.done(d);">
+                <select name="role_id" lay-verify="required" lay-verType="tips">
+                    <option value=""></option>
+                    {{# layui.each(d.data,function(index,item){ }}
+                    <option value="{{ item.id }}">{{ item.name }}</option>
+                    {{# }) }}
+                </select>
+            </script>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">昵称</label>
+        <div class="layui-input-block">
+            <input type="text" name="nickname" lay-verify="required" lay-verType="tips" autocomplete="false"
+                   class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">密码</label>
+        <div class="layui-input-block">
+            <input type="password" name="password" lay-verify="required" lay-verType="tips" autocomplete="false"
+                   class="layui-input">
+        </div>
+    </div>
+    <button class="layui-btn" lay-submit lay-filter="add">提交</button>
+</form>
+
+<script>
+    layui.use(['admin', 'form', 'layer'], function () {
+        var $ = layui.$
+            , admin = layui.admin
+            , form = layui.form
+            , layer = layui.layer
+            , layedit = layui.layedit
+            , upload = layui.upload;
+
+        form.on('submit(add)', function (data) {
+            admin.req({
+                url: '/admin/user/add'
+                , type: 'post'
+                , data: data.field
+                , done: function (res) {
+                    layer.msg(res.msg, {icon: 6, time: 1000, shade: 0.1}, function () {
+                        layer.closeAll();
+                    });
+                }
+            });
+            return false;
+        });
+
+    });
+
+    layui.data.done = function (d) {
+        layui.use(['form'], function () {
+            layui.form.render();
+        });
+    };
+</script>

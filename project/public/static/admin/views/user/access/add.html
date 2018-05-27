@@ -1,0 +1,69 @@
+<form class="layui-form layui-form-pane">
+    <div class="layui-form-item">
+        <label class="layui-form-label">层级菜单</label>
+        <div class="layui-input-block">
+            <script type="text/html" template lay-url="/admin/access/getMenu" lay-done="layui.data.done(d);">
+                <select name="parent_id">
+                    <option value="0">顶级菜单</option>
+                    <optgroup label="一级菜单">
+                        {{# layui.each(d.data.firstMenu,function(index,item){ }}
+                        <option value="{{ item.id }}">{{ item.name }}</option>
+                        {{# }) }}
+                    </optgroup>
+                    {{# layui.each(d.data.menu,function(index,item){ }}
+                    <optgroup label="{{ item.name }}">
+                        {{# layui.each(item.list,function(idx,itm){ }}
+                        <option value="{{ itm.id }}">{{ itm.name }}</option>
+                        {{# }) }}
+                    </optgroup>
+                    {{# }) }}
+                </select>
+            </script>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">权限名</label>
+        <div class="layui-input-block">
+            <input type="text" name="name" lay-verify="required" lay-verType="tips" autocomplete="false"
+                   class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">url</label>
+        <div class="layui-input-block">
+            <input type="text" name="url" lay-verify="required" lay-verType="tips" autocomplete="false"
+                   class="layui-input">
+        </div>
+    </div>
+    <button class="layui-btn" lay-submit lay-filter="add">提交</button>
+</form>
+
+<script>
+    layui.use(['admin', 'form', 'layer'], function () {
+        var $ = layui.$
+            , admin = layui.admin
+            , form = layui.form
+            , layer = layui.layer;
+
+        form.on('submit(add)', function (data) {
+            admin.req({
+                url: '/admin/access/add'
+                , type: 'post'
+                , data: data.field
+                , done: function (res) {
+                    layer.msg(res.msg, {icon: 6, time: 1000, shade: 0.1}, function () {
+                        layer.closeAll();
+                    });
+                }
+            });
+            return false;
+        });
+
+    });
+
+    layui.data.done = function (d) {
+        layui.use(['form'], function () {
+            layui.form.render();
+        });
+    }
+</script>

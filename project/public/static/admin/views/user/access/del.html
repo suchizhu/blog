@@ -1,0 +1,158 @@
+
+<title>权限删除列表</title>
+
+<div class="layui-card layadmin-header">
+    <div class="layui-breadcrumb" lay-filter="breadcrumb">
+        <a lay-href="">主页</a>
+        <a><cite>用户</cite></a>
+        <a><cite>权限管理</cite></a>
+        <a><cite></cite></a>
+    </div>
+</div>
+
+<style>
+    .layui-btn .layui-icon{
+        margin-right: 0;
+    }
+</style>
+
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">权限删除列表</div>
+                <div class="layui-card-body">
+                    <div class="LAY-user-access-btns" style="margin-bottom: 10px;">
+                        <button class="layui-btn layui-btn-danger layui-btn-xs" data-events="clear" title="批量清除">
+                            <i class="layui-icon layui-icon-bianjiwenzi"></i>
+                        </button>
+                    </div>
+                    <table id="LAY-user-access-table-del" lay-filter="LAY-user-access-table-del"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/html" id="statusTpl">
+    <input type="checkbox" name="status" value="{{ d.id }}" lay-skin="switch" lay-text="正常|禁用" lay-filter="status" {{ d.status == 1 ? 'checked' : '' }}>
+</script>
+<script type="text/html" id="toolbarTpl">
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="clear" title="清除">
+        <i class="layui-icon layui-icon-bianjiwenzi"></i>
+    </a>
+</script>
+
+<script>
+    layui.use(['admin','table','form','layer'], function(){
+        var $ = layui.$
+            ,admin = layui.admin
+            ,element = layui.element
+            ,table = layui.table
+            ,form = layui.form
+            ,layer = layui.layer;
+
+        var menuTpl = function(d){
+            if(d.parent_id == 0){
+                return '一级菜单';
+            }else{
+                return '次级菜单';
+            }
+        };
+
+        var nameTpl = function(d){
+            return '<a lay-href="/user/access/list/parent_id='+d.id+'">'+d.name+'</a>';
+        };
+
+        //列表渲染
+        table.render({
+            elem: '#LAY-user-access-table-del'
+            ,url: 'admin/access/getList'
+            ,page: true
+            ,limit: 10
+            ,limits: [10, 20, 30]
+            ,cellMinWidth: 100
+            ,cols: [[
+                {type: 'checkbox', fixed: 'left'}
+                ,{type: 'numbers'}
+                ,{field: 'name', title: '权限名', align: 'center', templet: nameTpl}
+                ,{field: 'url', title: 'url', align: 'center', edit: 'text'}
+                ,{field: 'parent_id', title: '菜单层级', align: 'center', templet: menuTpl}
+                ,{field: 'create_time', title: '创建时间', align: 'center'}
+                ,{field: 'status', title: '状态', align: 'center', templet: '#statusTpl'}
+                ,{fixed: 'right', title: '操作', align: 'center', toolbar: '#toolbarTpl'}
+            ]]
+            ,where: {
+                statusCode: '<',
+                access_token: layui.data('layuiAdmin').access_token
+            }
+        });
+
+        //监听状态操作
+        form.on('switch(status)',function(obj){
+            var value = obj.elem.checked ? 1: 0;
+            admin.req({
+                url: 'admin/access/update'
+                ,type: 'post'
+                ,data: {field: this.name, value: value, id: this.value}
+                ,done: function(res){
+                    layer.msg(res.msg,{icon: 6,time: 1000,shade: 0.1},function(){
+                        admin.events.refresh();
+                    });
+                }
+            });
+        });
+
+        //监听工具栏操作
+        table.on('tool(LAY-user-access-table-del)',function(obj){
+            if(obj.event === 'clear'){
+                layer.confirm('确认清除?',{icon: 2, btnAlign: 'c'},function(index){
+                    admin.req({
+                        url: 'admin/access/clear'
+                        ,type: 'post'
+                        ,data: {id: obj.data.id}
+                        ,done: function(res){
+                            layer.msg(res.msg,{icon: 6,time: 1000,shade: 0.1},function(){
+                                obj.del();
+                            });
+                        }
+                    });
+                    layer.close(index);
+                });
+            }
+        });
+
+        //事件处理
+        var events = {
+            clear: function(othis){
+                var checkStatus = table.checkStatus('LAY-user-access-table-del')
+                    ,data = [];
+                if(checkStatus.data.length === 0){
+                    return layer.msg('未选中行');
+                }
+                for(var i = 0;i < checkStatus.data.length;i++){
+                    data[i] = checkStatus.data[i]['id'];
+                }
+                layer.confirm('确认清除选中的数据吗?',{icon: 2, btnAlign: 'c'},function(index){
+                    admin.req({
+                        url: 'admin/access/clear'
+                        ,type: 'post'
+                        ,data: {id: data}
+                        ,done: function(res){
+                            layer.msg(res.msg,{icon: 6,time: 1000,shade: 0.1},function(){
+                                admin.events.refresh();
+                            });
+                        }
+                    });
+                    layer.close(index);
+                });
+            }
+        }
+
+        //触发事件
+        $(".LAY-user-access-btns .layui-btn").on('click',function(){
+            var othis = $(this),thisEvent = othis.data('events');
+            events[thisEvent] && events[thisEvent].call(this, othis);
+        });
+    });
+</script>

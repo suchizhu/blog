@@ -1,0 +1,119 @@
+<title>网站设置</title>
+  
+<div class="layui-fluid">
+  <div class="layui-row layui-col-space15">
+    <div class="layui-col-md12">
+      <div class="layui-card">
+        <div class="layui-card-header">网站设置</div>
+        <div class="layui-card-body" pad15>
+          
+          <form class="layui-form" wid100>
+          <script type="text/html" template lay-url="/admin/set/website" lay-done="layui.data.done(d);">
+                <div class="layui-form-item layui-form-text">
+                  <label class="layui-form-label">首页标题</label>
+                  <div class="layui-input-block">
+                    <input type="text" name="title" value="{{ d.data.title }}" lay-verify="required" lay-verType="tips" class="layui-input">
+                  </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">网站logo</label>
+                    <div class="layui-input-inline">
+                        <input type="hidden" name="logo" value="{{ d.data.logo }}" id="LAY_imageSrc"
+                               placeholder="图片地址"
+                               class="layui-input">
+                        <input type="hidden" name="image_id" id="LAY_imageId" value="{{ d.data.image_id }}">
+                    </div>
+                    <div class="layui-input-inline layui-btn-container" style="width: auto;">
+                        <button type="button" class="layui-btn layui-btn-primary" id="LAY_imageUpload">
+                            <i class="layui-icon">&#xe67c;</i>上传图片
+                        </button>
+                        <button type="button" class="layui-btn layui-btn-primary"
+                                layadmin-event="imagePreview">查看图片
+                        </button>
+                    </div>
+                </div>
+                <div class="layui-form-item layui-form-text">
+                  <label class="layui-form-label">META关键词</label>
+                  <div class="layui-input-block">
+                    <textarea name="keywords" class="layui-textarea" lay-verify="required" lay-verType="tips" placeholder="多个关键词用英文状态 , 号分割">{{ d.data.keywords }}</textarea>
+                  </div>
+                </div>
+                <div class="layui-form-item layui-form-text">
+                  <label class="layui-form-label">META描述</label>
+                  <div class="layui-input-block">
+                    <textarea name="descript" class="layui-textarea" lay-verify="required" lay-verType="tips">{{ d.data.descript }}</textarea>
+                  </div>
+                </div>
+                <div class="layui-form-item layui-form-text">
+                  <label class="layui-form-label">版权信息</label>
+                  <div class="layui-input-block">
+                    <textarea name="copyright" lay-verify="required" lay-verType="tips" class="layui-textarea">{{ d.data.copyright }}</textarea>
+                  </div>
+                </div>
+                <input type="hidden" name="id" value="{{ d.data.id }}">
+            </script>
+            <div class="layui-form-item">
+              <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="set_website">确认保存</button>
+              </div>
+            </div>
+          </form>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    layui.data.done = function(d){
+        layui.use(['admin','upload','form'],function(){
+            var $ = layui.$
+            , admin = layui.admin
+            , upload = layui.upload
+            , form = layui.form;
+
+            form.on('submit(set_website)',function(data) {
+                admin.req({
+                    url: '/admin/set/website'
+                    ,type: 'post'
+                    ,data: data.field
+                    ,done: function(res) {
+                      layer.msg(res.msg,{icon: 6,time: 1000,shade: 0.1});
+                    }
+                });
+                return false;
+            });
+
+            upload.render({
+                elem: '#LAY_imageUpload'
+                , url: '/api/common/uploadImage'
+                , data: {path: $("#LAY_imageSrc").val()}
+                , done: function (res) {
+                    if (res.code == 0) {
+                        layer.msg(res.msg, {icon: 6, time: 1000, shade: 0.1}, function () {
+                            $("#LAY_imageSrc").val(res.data.src);
+                            $("#LAY_imageId").val(res.data.id);
+                        });
+                    }
+                }
+            });
+
+            //查看图片
+            admin.events.imagePreview = function (othis) {
+                var src = $("#LAY_imageSrc").val();
+                layer.photos({
+                    photos: {
+                        "title": "查看图片"
+                        , "data": [{
+                            "src": src
+                        }]
+                    }
+                    , shade: 0.01
+                    , closeBtn: 1
+                    , anim: 5
+                });
+            };
+        });
+    };
+</script>

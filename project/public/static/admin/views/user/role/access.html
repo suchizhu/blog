@@ -1,0 +1,108 @@
+<style>
+    .layui-nav-itemed>.layui-nav-child-access{
+        background-color: #fff!important;
+    }
+    .layui-nav-tree .layui-nav-bar{
+        background-color: #fff!important;
+    }
+    .layui-nav-tree .layui-nav-item a:hover{
+        background-color: #fff;
+    }
+    .layui-nav-item>a .layui-nav-more{
+        border-color: #000 transparent transparent;
+    }
+    .layui-nav-itemed>a .layui-nav-more{
+        border-color: transparent transparent #000;
+    }
+</style>
+<form class="layui-form layui-form-pane">
+    <div class="layui-form-item">
+        <script type="text/html" template lay-url="/admin/role/getAccessMenu?id={{ d.params.id }}" lay-done="layui.data.done(d);">
+            <ul class="layui-nav layui-nav-tree" lay-filter="test" style="background-color: #fff;">
+                {{# layui.each(d.data.menu,function(index,item){ }}
+                <li class="layui-nav-item" name="{{ item.name }}">
+                    <a href="javascript:;"><input type="checkbox" title="{{ item.title }}" lay-skin="primary"></a>
+
+                    <dl class="layui-nav-child layui-nav-child-access" name="{{ item.name }}">
+                        {{# layui.each(item.list,function(idx,im){ }}
+                        <dd>
+                            <input type="checkbox" name="access_id[]" value="{{ im.id }}" title="{{ im.name }}" lay-skin="primary"
+                                   {{# layui.each(d.data.accessIdList,function(id,i){ }}
+                                   {{# if(i == im.id){ }}
+                                   checked
+                                   {{# } }}
+                                   {{# }) }}
+                            >
+                        </dd>
+                        {{# }) }}
+                    </dl>
+
+                </li>
+                {{# }) }}
+            </ul>
+            <input type="hidden" name="id" value="{{ d.params.id }}">
+        </script>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit lay-filter="access">确认</button>
+        </div>
+    </div>
+</form>
+
+<script>
+    layui.use(['admin','form'], function(){
+        var $ = layui.$
+            ,admin = layui.admin
+            ,form = layui.form;
+
+        form.render();
+
+        form.on('submit(access)',function(data){
+            admin.req({
+                url: '/admin/role/access'
+                ,type: 'post'
+                ,data: data.field
+                ,done: function(res){
+                    layer.msg(res.msg,{icon: 6,time: 1000,shade: 0.1},function(){
+                        layer.closeAll();
+                    });
+                }
+            });
+            return false;
+        });
+
+    });
+
+    layui.data.done = function(d){
+        layui.use(['form','element'],function(){
+            var form = layui.form
+                ,$ = layui.$
+                ,element = layui.element;
+
+            element.render();
+            form.render();
+
+            $(".layui-nav-item a .layui-form-checkbox").click(function(e){
+                var oEvent = e || event;
+                oEvent.stopPropagation();
+            });
+
+            $(".layui-nav-item a .layui-form-checkbox").click(function(){
+                var name = $(this).parent().parent().attr('name');
+                if($(this).attr('class').indexOf('layui-form-checked') != -1){
+                    $('.layui-nav-item[name='+name+'] dl .layui-form-checkbox').addClass('layui-form-checked');
+                    $('.layui-nav-item[name='+name+'] dl input[type="checkbox"]').attr('checked',true);
+                }else{
+                    $('.layui-nav-item[name='+name+'] dl .layui-form-checkbox').removeClass('layui-form-checked');
+                    $('.layui-nav-item[name='+name+'] dl input[type="checkbox"]').attr('checked',false);
+                }
+            });
+
+            $(".layui-nav-item dl .layui-form-checkbox").click(function(){
+                var name = $(this).parent().parent().attr('name');
+            });
+
+        });
+    };
+</script>
