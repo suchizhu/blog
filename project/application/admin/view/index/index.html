@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>苏赤竹个人博客后台管理系统</title>
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <link rel="stylesheet" href="__COMMON__/layui/css/layui.css" media="all">
+  <link rel="shortcut icon" href="__COMMON__/icon/favicon.ico" type="image/x-icon" />
+  <script>
+  /^http(s*):\/\//.test(location.href) || alert('请先部署到 localhost 下再访问');
+  </script>
+</head>
+<body>
+  <div id="LAY_app"></div>
+  <script src="__COMMON__/layui/layui.js"></script>
+  <script>
+  layui.config({
+    base: '__ADMIN__/'
+    ,version: new Date().getTime()
+  }).use('index');
+  </script>
+</body>
+</html>
+
+

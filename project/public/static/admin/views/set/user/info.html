@@ -87,25 +87,37 @@
                 return false;
             });
 
+            var LAY_AVATARSRC = '#LAY_avatarSrc';
+
             // 上传头像
             upload.render({
                 elem: '#LAY_avatarUpload'
                 , url: '/api/common/uploadAvatar'
-                , data: {image_id: $("#image_id").val(), path: $("#LAY_avatarSrc").val()}
+                , data: {image_id: $("#image_id").val(), path: $(LAY_AVATARSRC).val()}
                 , field: 'image'
                 , size: 50
+                , before: function(obj) {
+                  layer.msg('加载中', {
+                    icon: 16
+                    ,shade: 0.01
+                  });
+                }
                 , done: function (res) {
+                    layer.closeAll();
                     if (res.code == 0) {
                         layer.msg(res.msg, {icon: 6, time: 1000, shade: 0.1}, function () {
-                            $("#LAY_avatarSrc").val(res.data);
+                            $(LAY_AVATARSRC).val(res.data);
                         });
                     }
+                }
+                , error: function(index, upload) {
+                  layer.closeAll();
                 }
             });
 
             //查看头像
             admin.events.avartatPreview = function (othis) {
-                var src = $("#LAY_avatarSrc").val();
+                var src = $(LAY_AVATARSRC).val();
                 layer.photos({
                     photos: {
                         "title": "查看头像"

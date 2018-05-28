@@ -51,6 +51,7 @@ html,body,#LAY_app{height:100%;
   }
   .layui-login {
     width: 250px;
+    padding-top: 100px;
   }
 }
 
